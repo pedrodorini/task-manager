@@ -1,3 +1,3 @@
-# Gerenciador de Tarefas
+# Task Manager
 
-Aplicação de gerenciamento de tarefas com Next.js 15 e tRPC (em construção).
+Task management app built with Next.js 15 and tRPC (work in progress).

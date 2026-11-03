@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Gerenciador de Tarefas",
-  description: "Gerenciamento simples de tarefas com Next.js e tRPC",
+  title: "Task Manager",
+  description: "Simple task management app built with Next.js and tRPC",
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="pt-BR">
+    <html lang="en">
       <body className="antialiased">
         <main className="mx-auto max-w-2xl p-6">{children}</main>
       </body>

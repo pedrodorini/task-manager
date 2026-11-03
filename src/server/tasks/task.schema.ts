@@ -11,6 +11,8 @@ import { z } from "zod";
 export const TITULO_MAX_LENGTH = 120;
 export const DESCRICAO_MAX_LENGTH = 1000;
 
+// Field names (titulo, descricao, dataCriacao) intentionally follow the
+// challenge specification, while all user-facing text is in English.
 export interface Task {
   id: string;
   titulo: string;
@@ -21,22 +23,22 @@ export interface Task {
 // `error` on z.string() covers a missing/non-string value; `.min(1)` covers a
 // blank one (after trim). Both result in the same message for the user.
 const titulo = z
-  .string({ error: "O título é obrigatório." })
+  .string({ error: "Title is required." })
   .trim()
-  .min(1, "O título é obrigatório.")
-  .max(TITULO_MAX_LENGTH, `O título deve ter no máximo ${TITULO_MAX_LENGTH} caracteres.`);
+  .min(1, "Title is required.")
+  .max(TITULO_MAX_LENGTH, `Title must be at most ${TITULO_MAX_LENGTH} characters.`);
 
 // An empty description is normalized to `undefined` so we never store "".
 const descricao = z
   .string()
   .trim()
-  .max(DESCRICAO_MAX_LENGTH, `A descrição deve ter no máximo ${DESCRICAO_MAX_LENGTH} caracteres.`)
+  .max(DESCRICAO_MAX_LENGTH, `Description must be at most ${DESCRICAO_MAX_LENGTH} characters.`)
   .optional()
   .transform((value) => value || undefined);
 
 // Not restricted to UUID on purpose: an unknown id should result in a
 // meaningful NOT_FOUND error from the service, not a generic validation error.
-const id = z.string({ error: "O id é obrigatório." }).min(1, "O id é obrigatório.");
+const id = z.string({ error: "Id is required." }).min(1, "Id is required.");
 
 export const taskIdInput = z.object({ id });
 
