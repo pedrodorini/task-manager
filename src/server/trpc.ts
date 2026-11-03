@@ -40,4 +40,5 @@ const mapDomainErrors = t.middleware(async ({ next }) => {
 
 export const router = t.router;
 export const publicProcedure = t.procedure.use(mapDomainErrors);
+export const createCallerFactory = t.createCallerFactory;
 

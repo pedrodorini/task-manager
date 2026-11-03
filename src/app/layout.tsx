@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { TRPCProvider } from "@/trpc/client";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -14,7 +15,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="antialiased">
-        <main className="mx-auto max-w-2xl p-6">{children}</main>
+        <TRPCProvider>
+          <main className="mx-auto max-w-2xl p-6">{children}</main>
+        </TRPCProvider>
       </body>
     </html>
   );
