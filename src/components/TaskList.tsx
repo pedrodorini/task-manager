@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { trpc } from "@/trpc/client";
 import type { TaskPage } from "@/server/tasks/task.schema";
 import { Feedback } from "./Feedback";
@@ -16,15 +16,46 @@ export function TaskList({ initialData, initialMessage }: TaskListProps) {
     initialMessage ? { type: "success", message: initialMessage } : null
   );
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
   const utils = trpc.useUtils();
 
-  const { data } = trpc.task.list.useQuery(
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isError,
+    error,
+  } = trpc.task.list.useInfiniteQuery(
     { limit: 10 },
     {
-      initialData,
+      getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+      initialData: () => ({
+        pages: [initialData],
+        pageParams: [undefined],
+      }),
     }
   );
+
+  // Infinite Scroll: triggers fetchNextPage when sentinel enters viewport
+  useEffect(() => {
+    const target = sentinelRef.current;
+    if (!target) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const first = entries[0];
+        if (first.isIntersecting && hasNextPage && !isFetchingNextPage) {
+          fetchNextPage();
+        }
+      },
+      { rootMargin: "200px" } // Preload when 200px away from the bottom for smooth scrolling
+    );
+
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   const deleteMutation = trpc.task.delete.useMutation({
     onMutate: ({ id }) => {
@@ -35,10 +66,10 @@ export function TaskList({ initialData, initialMessage }: TaskListProps) {
       setFeedback({ type: "success", message: "Task deleted successfully." });
       utils.task.list.invalidate();
     },
-    onError: (error) => {
+    onError: (mutationError) => {
       setFeedback({
         type: "error",
-        message: error.message || "Failed to delete task. Please try again.",
+        message: mutationError.message || "Failed to delete task. Please try again.",
       });
     },
     onSettled: () => {
@@ -51,7 +82,7 @@ export function TaskList({ initialData, initialMessage }: TaskListProps) {
     deleteMutation.mutate({ id });
   };
 
-  const tasks = data?.items ?? [];
+  const tasks = data?.pages.flatMap((page) => page.items) ?? [];
 
   return (
     <section aria-labelledby="tasks-heading">
@@ -150,6 +181,39 @@ export function TaskList({ initialData, initialMessage }: TaskListProps) {
             );
           })}
         </ul>
+      )}
+
+      {/* Sentinel element for infinite scroll */}
+      <div ref={sentinelRef} className="h-4" aria-hidden="true" />
+
+      {/* Loading feedback for incremental page fetching */}
+      {isFetchingNextPage && (
+        <div className="py-4 text-center text-sm text-gray-500">
+          <span className="inline-block animate-pulse">Loading more tasks...</span>
+        </div>
+      )}
+
+      {/* Error loading next page */}
+      {isError && (
+        <div className="py-4 text-center">
+          <p className="text-sm text-red-600">
+            {error?.message || "Failed to load more tasks."}
+          </p>
+          <button
+            type="button"
+            onClick={() => fetchNextPage()}
+            className="mt-1 cursor-pointer text-xs font-semibold text-blue-600 hover:underline"
+          >
+            Try again
+          </button>
+        </div>
+      )}
+
+      {/* End of list reached */}
+      {!hasNextPage && tasks.length > 0 && (
+        <p className="py-4 text-center text-xs text-gray-400">
+          You have reached the end of the list ({tasks.length} tasks).
+        </p>
       )}
     </section>
   );
