@@ -77,6 +77,19 @@ export function TaskList({ initialData, initialMessage }: TaskListProps) {
     },
   });
 
+  const handleDismissFeedback = () => {
+    setFeedback(null);
+    if (typeof window !== "undefined" && window.location.search) {
+      const url = new URL(window.location.href);
+      if (url.searchParams.has("msg")) {
+        url.searchParams.delete("msg");
+        const query = url.searchParams.toString();
+        const nextUrl = url.pathname + (query ? `?${query}` : "");
+        window.history.replaceState(null, "", nextUrl);
+      }
+    }
+  };
+
   const handleDelete = (id: string) => {
     if (deleteMutation.isPending) return;
     deleteMutation.mutate({ id });
@@ -107,7 +120,7 @@ export function TaskList({ initialData, initialMessage }: TaskListProps) {
         <Feedback
           type={feedback.type}
           message={feedback.message}
-          onDismiss={() => setFeedback(null)}
+          onDismiss={handleDismissFeedback}
         />
       )}
 
